@@ -31,9 +31,6 @@
       <%= f.text_field :body,:readonly => true %></p>
     <% end %>
 
-    <p><%= f.label :tags, t('key.attr.tags') %>
-    <%= f.text_field :tags, value: Vault::Tag.tags_to_string(key.tags), class: 'autocomplete' %></p>
-
     <p><%= f.label :file, t('key.attr.file') %>
     <% if User.current.allowed_to?(:edit_keys, @project) %>
       <%= f.file_field :file %></p>

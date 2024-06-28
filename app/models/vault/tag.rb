@@ -3,7 +3,7 @@ module Vault
     self.table_name = 'vault_tags'
     has_and_belongs_to_many :keys
     unloadable
-    attr_accessible :name
+    attr_accessor :name
 
     validates :name, presence: true, uniqueness: true
 

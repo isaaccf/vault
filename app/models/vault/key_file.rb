@@ -1,6 +1,6 @@
 module Vault
 class KeyFile < Key
-  attr_accessible :file
+  attr_accessor :file
   before_update :update_file, if: :file_changed?
   before_destroy :delete_file
 

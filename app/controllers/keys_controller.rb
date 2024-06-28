@@ -90,7 +90,10 @@ class KeysController < ApplicationController
 
     @key.project = @project
 
-    @key.tags = Vault::Tag.create_from_string(key_params[:tags])
+    Rails.logger.info '@key.inspect'
+    Rails.logger.info @key.inspect
+
+    #@key.tags = Vault::Tag.create_from_string(key_params[:tags])
 
     self.update_wishlist
 
