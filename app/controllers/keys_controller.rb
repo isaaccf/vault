@@ -3,8 +3,8 @@ class KeysController < ApplicationController
 
   before_action :find_project_by_project_id
   before_action :authorize
-  before_action :find_key, only: [ :show, :edit, :update, :destroy, :copy ]
-  before_action :find_keys, only: [ :context_menu ]
+  before_action :find_key, only: [:show, :edit, :update, :destroy, :copy]
+  before_action :find_keys, only: [:context_menu]
   accept_api_auth :index, :show
 
   helper :sort
@@ -12,10 +12,8 @@ class KeysController < ApplicationController
   helper ContextMenusHelper
 
   def index
-
-    unless Setting.plugin_vault['use_redmine_encryption'] ||
-           Setting.plugin_vault['use_null_encryption']
-      if not Setting.plugin_vault['encryption_key'] or Setting.plugin_vault['encryption_key'].empty?
+    unless Setting.plugin_vault['use_redmine_encryption'] || Setting.plugin_vault['use_null_encryption']
+      if !Setting.plugin_vault['encryption_key'] || Setting.plugin_vault['encryption_key'].empty?
         render_error t("error.key.not_set")
         return
       end
@@ -26,11 +24,7 @@ class KeysController < ApplicationController
 
     @query = params[:query]
 
-    if params[:search_fild] == nil
-      @search_fild = 'name'
-    else
-      @search_fild = params[:search_fild]
-    end
+    @search_fild = params[:search_fild] || 'name'
 
     if @query
       if @query.match(/#/)
@@ -38,32 +32,30 @@ class KeysController < ApplicationController
         tag = Vault::Tag.find_by_name(tag_string)
         @keys = tag.nil? ? nil : tag.keys.where(project: @project)
       else
-        if params[:search_fild] == 'name'
-          @keys = @project.keys.where(name: @query)
-        elsif params[:search_fild] == 'url'
-          @keys = @project.keys.where(url: @query)
-        elsif params[:search_fild] == 'tag'
-          tag = Vault::Tag.find_by_name(@query)
-          @keys = tag.nil? ? nil : tag.keys.where(project: @project)
-        end
+        @keys = case @search_fild
+                when 'name'
+                  @project.keys.where(name: @query)
+                when 'url'
+                  @project.keys.where(url: @query)
+                when 'tag'
+                  tag = Vault::Tag.find_by_name(@query)
+                  tag.nil? ? nil : tag.keys.where(project: @project)
+                end
       end
     else
       @keys = @project.keys
     end
 
     @keys = @keys.order(sort_clause) unless @keys.nil?
-    @keys = @keys.select { |key| key.whitelisted?(User,@project) } unless @keys.nil?
-    @keys = [] if @keys.nil? #hack for decryption
+    @keys = @keys.select { |key| key.whitelisted?(User, @project) } unless @keys.nil?
+    @keys = [] if @keys.nil?
 
     @limit = per_page_option
     @key_count = @keys.count
     @key_pages = Paginator.new @key_count, @limit, params[:page]
     @offset ||= @key_pages.offset
 
-    if @key_count > 0
-      @keys = @keys.drop(@offset).first(@limit)
-    end
-
+    @keys = @keys.drop(@offset).first(@limit) if @key_count > 0
     @keys.map(&:decrypt!)
 
     respond_to do |format|
@@ -87,11 +79,7 @@ class KeysController < ApplicationController
   def create
     save_file if key_params[:file]
     @key = Vault::Key.new(key_params)
-
     @key.project = @project
-
-    # TODO: remove tags temporary
-    #@key.tags = Vault::Tag.create_from_string(key_params[:tags])
 
     self.update_wishlist
 
@@ -107,48 +95,41 @@ class KeysController < ApplicationController
   def update
     save_file if key_params[:file]
     respond_to do |format|
-
       self.update_wishlist
 
-      if @key.update_attributes(params[:vault_key])
-        @key.tags = Vault::Tag.create_from_string(key_params[:tags])
+      Rails.logger.info "Key params: #{key_params}"
+      if @key.update(key_params)
         format.html { redirect_to project_keys_path(@project), notice: t('notice.key.update.success') }
       else
-        format.html { render action: 'edit'}
+        format.html { render action: 'edit' }
       end
     end
   end
 
   def update_wishlist
     if User.current.allowed_to?(:manage_whitelist_keys, @key.project)
-      if params[:whitelist].blank?
-          @key.whitelist = ""
-      else
-          @key.whitelist =  params[:whitelist].join(",")
-      end
+      @key.whitelist = params[:whitelist].blank? ? "" : params[:whitelist].join(",")
     end
   end
 
   def edit
-    if !@key.whitelisted?(User,@project)
+    if !@key.whitelisted?(User, @project)
       render_error t("error.key.not_whitelisted")
-      return
     else
       @key.decrypt!
       respond_to do |format|
-        format.html { render action: 'edit'}
+        format.html { render action: 'edit' }
       end
     end
   end
 
   def show
-    if !@key.whitelisted?(User,@project)
+    if !@key.whitelisted?(User, @project)
       render_error t("error.key.not_whitelisted")
-      return
     else
       @key.decrypt!
       respond_to do |format|
-        format.html { render action: 'show'}
+        format.html { render action: 'show' }
       end
     end
   end
@@ -160,7 +141,6 @@ class KeysController < ApplicationController
   end
 
   def context_menu
-    #FIXME
     @keys.map(&:decrypt!)
     render layout: false
   end
@@ -168,15 +148,15 @@ class KeysController < ApplicationController
   private
 
   def find_key
-    @key=Vault::Key.find(params[:id])
+    @key = Vault::Key.find(params[:id])
     unless @key.project_id == @project.id
       redirect_to project_keys_path(@project), notice: t('alert.key.not_found')
     end
   end
 
   def find_keys
-    @keys=Vault::Key.find(params[:ids])
-    unless @keys.all? { |k| k.project_id == @project.id } 
+    @keys = Vault::Key.find(params[:ids])
+    unless @keys.all? { |k| k.project_id == @project.id }
       redirect_to project_keys_path(@project), notice: t('alert.key.not_found')
     end
   end
@@ -194,5 +174,4 @@ class KeysController < ApplicationController
     File.open("#{Vault::KEYFILES_DIR}/#{name}", "wb") { |f| f.write(key_params[:file].read) }
     params['vault_key']['file'] = name
   end
-
 end
