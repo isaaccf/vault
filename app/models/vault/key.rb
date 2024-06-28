@@ -4,6 +4,8 @@ module Vault
 
   class Vault::Key < ActiveRecord::Base
     belongs_to :project
+		# TODO: remove tags temporary
+		#has_and_belongs_to_many :tags
     unloadable
 
     def tags=(tags_string)

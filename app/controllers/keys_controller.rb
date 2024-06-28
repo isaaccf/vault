@@ -90,9 +90,7 @@ class KeysController < ApplicationController
 
     @key.project = @project
 
-    Rails.logger.info '@key.inspect'
-    Rails.logger.info @key.inspect
-
+    # TODO: remove tags temporary
     #@key.tags = Vault::Tag.create_from_string(key_params[:tags])
 
     self.update_wishlist
