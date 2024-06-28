@@ -90,8 +90,7 @@ class KeysController < ApplicationController
 
     @key.project = @project
 
-    # TODO: remove tags temporary
-    #@key.tags = Vault::Tag.create_from_string(key_params[:tags])
+    @key.tags = Vault::Tag.create_from_string(key_params[:tags])
 
     self.update_wishlist
 
