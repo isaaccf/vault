@@ -33,12 +33,7 @@
     
     <%# TODO: remove tags temporary %>
 
-    <p><%= f.label :file, t('key.attr.file') %>
-    <% if User.current.allowed_to?(:edit_keys, @project) %>
-      <%= f.file_field :file %></p>
-    <% else %>
-      <%= f.file_field :file,:readonly => true %></p>
-    <% end %>
+    <%# TODO: remove file temporary %>
 
     <p><%= f.label :comment, t('key.attr.comment') %>
     <% if User.current.allowed_to?(:edit_keys, @project) %>
