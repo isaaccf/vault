@@ -20,9 +20,7 @@
       <%= radio_button_tag(:search_fild, "url", @search_fild == 'url' ? true : false ) %>
       <%= label_tag(:url, t('key.attr.url')) %>
 
-      <%= radio_button_tag(:search_fild, "tag", @search_fild == 'tag' ? true : false ) %>
-      <%= label_tag(:tag, t('key.attr.tags')) %>
-      </font>
+      <%# TODO: remove tags temporary %>
 
   <%= submit_tag(t('button_update')) %>
 <% end %>

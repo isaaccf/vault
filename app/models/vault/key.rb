@@ -4,9 +4,11 @@ module Vault
 
   class Vault::Key < ActiveRecord::Base
     belongs_to :project
-		has_and_belongs_to_many :tags
+		# TODO: remove tags temporary
+		#has_and_belongs_to_many :tags
     unloadable
 
+		# TODO: remove tags temporary
     #def tags=(tags_string)
     #  @tags = Vault::Tag.create_from_string(tags_string)
     #end
